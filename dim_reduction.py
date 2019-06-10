@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import numpy as np
 
 """
@@ -35,7 +36,7 @@ def reduce(X, threshold = 1, leave = None):
     X_hat = center_matrix(X)
 
     # Sigma
-    cov_mtx = (X_hat.transpose() @ X_hat) * (1 / n)  # np.cov(X_hat, rowvar = False) -- difrerent results ???
+    cov_mtx = np.cov(X_hat, rowvar = False) # (X_hat.transpose() @ X_hat) * (1 / n)  -- difrerent results ???
 
     cov_eVal, cov_eVec = np.linalg.eigh(cov_mtx)
 
