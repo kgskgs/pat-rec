@@ -42,8 +42,6 @@ def normalize_v(v):
         raise ValueError("cannot normalize zero length vector")
     return np.array([x/norm for x in v])
 
-d = np.loadtxt(open("./data/linear_datat_2class.csv", "r", encoding='utf-8-sig'), delimiter=",", skiprows=0)
-
 
 def minimize_loss(eta_w, eta_b, w, b, X, y, it = 100):
     """
@@ -68,26 +66,23 @@ def minimize_loss(eta_w, eta_b, w, b, X, y, it = 100):
             delta_w += prediction * X[i] / 2
             delta_b += prediction / 2
 
-
         w = w - eta_w*normalize_v(delta_w)
         b = b - eta_b*delta_b
         #print(z, w, b, delta_w, delta_b, get_loss(y, y_hat, w, X, b))
     return (normalize_v(w), b)
 
 if __name__=="__main__":
+    d = np.loadtxt(open("./data/linear_datat_2class.csv", "r", encoding='utf-8-sig'), delimiter=",", skiprows=0)
+
     X, y = d[:,:-1], d[:,-1:]
     colors = ["red" if x==1 else "blue" for x in y]
 
-
     plt.scatter(X[:,0], X[:,1], color=colors)
-
 
     w, b = minimize_loss(0.03, 0.03, np.array([0.5, 0.5]), 1, X, y)
 
-
     point1 = [0, -b/w[0]]
     point2 = [-b/w[1], 0]
-
 
     plt.axis('equal')
     #plt.axis([30, 100, 30, 100])
