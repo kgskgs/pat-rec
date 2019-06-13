@@ -28,7 +28,7 @@ def predict(w, b, x):
     :return: +1 if the observation is above the boundry -1 otherwise
     """
     res = w @ x + b
-    if  res > 0: return 1
+    if res > 0: return 1
     return -1
 
 def normalize_v(v):

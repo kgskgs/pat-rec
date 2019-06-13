@@ -3,19 +3,21 @@ import numpy as np
 import math
 import random
 
-class neural_net():
+import mnist_reader
 
 
-    def __init__(self, layers_sizes, eta, act, act_derv, cost, cost_derv):
+class multilayer_perceptron():
+
+    def __init__(self, layers_sizes, act, act_drv, cost, cost_drv):
         self.layers = layers_sizes
         self.n_layers = len(layers_sizes)
         self.act = act
-        self.act_derv = act_derv
+        self.act_drv = act_drv
         self.get_cost = cost
-        self.cost_derv = cost_derv
+        self.cost_drv = cost_drv
 
-        self.biases = [np.random.rand(x, 1) for x in self.layers[1:]]
-        self.weights = [np.random.rand(x, y) for x, y in zip(self.layers[1:], self.layers[:-1])]
+        self.biases = [np.random.randn(x, 1) for x in self.layers[1:]]
+        self.weights = [np.random.randn(x, y) for x, y in zip(self.layers[1:], self.layers[:-1])]
 
     def feed_forward(self, data):
         """
@@ -27,7 +29,10 @@ class neural_net():
 
         return data
 
-    def train(self, data, epochs, batch_size, eta):
+    def predict(self, data):
+        return np.argmax(self.feed_forward(data))
+
+    def gradient_descent(self, data, epochs, batch_size, eta):
         """
         perform gradient decent on training data, splitting it into batches - update weights and biases for each batch
         :param data: :type list of tuples: input (parameters, label)
@@ -45,49 +50,58 @@ class neural_net():
                 grad_w = [np.zeros(w.shape) for w in self.weights]
                 grad_b = [np.zeros(b.shape) for b in self.biases]
                 for params, label in batch:
-                    #parital derivatives for each example with respect to weigts/biases
+                    #parital derivatives for each example error with respect to weigts/biases
                     delta_w, delta_b = self.backpropagation(params, label)
                     grad_w = [gw + dw for gw, dw in zip(grad_w, delta_w)]
                     grad_b = [gb + dw for gb, dw in zip(grad_b, delta_b)]
 
-                #update weights & biases
-                self.weights = [w - eta/len(batch) * gw for w, gw in zip(self.weights, grad_w)]
-                self.weights = [b - eta / len(batch) * gb for b, gb in zip(self.biases, grad_b)]
-            print("{}/{}".format(z, epochs))
+                #update weights & biases; averaged across the size of the batch
+                self.weights = [w - eta / len(batch) * gw for w, gw in zip(self.weights, grad_w)]
+                self.biases = [b - eta / len(batch) * gb for b, gb in zip(self.biases, grad_b)]
+            print("{}/{}".format(z+1, epochs))
 
     def backpropagation(self, params, label):
         grad_b = [np.zeros(b.shape) for b in self.biases]
         grad_w = [np.zeros(w.shape) for w in self.weights]
 
         #feed forward
-        activation = params
+
+        #outputs after activation
         activations = [params]
-        #outputs before activation
-        outs = []
-        for i in range(len(self.n_layers - 1)):
-            out = self.weights[i] @ activation + self.biases[i]
-            outs.append(out)
-            activation = self.act(out)
+        activation = params
+        #inputs to the activation of the layer
+        inps = []
+
+        for i in range(self.n_layers - 1):
+            inp = self.weights[i] @ activation + self.biases[i]
+            inps.append(inp)
+            activation = self.act(inp)
             activations.append(activation)
 
         #backward pass
-        #output layer
-        delta = self.cost_derv(activations[-1], y) * self.act_derv(outs[-1]) #TODO final
-        grad_b[-1] = delta
-        grad_w[-1] = delta @ activations[-2].transpose()
+        #final layer
 
+        #delta - how much the current layer contributes to the error/cost
+        #delta at output layer dError/dActivation ⊙ dActivation/dInput -> dError/dInput
+        delta = self.cost_drv(activations[-1], label) * self.act_drv(inps[-1]) #TODO final
+        #output = w @ [previous activation] + b
+        # dInput/dBias
+        grad_b[-1] = delta
+        # dInput/dWeight
+        grad_w[-1] = delta @ activations[-2].transpose()
+        #hidden layers
         for i in range(2, self.n_layers):
-            #out =
-            delta = (self.weights[-i + 1].transpose() @ delta) * self.act_derv(outs[-i])
+            #pull delta back to the previous layer by multiplying it by the weights 'connecting' them transposed (i.e. in reverse)
+            delta = (self.weights[-i + 1].transpose() @ delta) * self.act_drv(inps[-i])
             grad_b[-i] = delta
             grad_w[-i] = delta @ activations[-i-1].transpose()
 
         return(grad_w, grad_b)
 
     def test(self, data):
-        results = [(np.argmax(self.feed_forward(params), label) for (params, label) in data)]
+        #label is in vector form
+        results = [(self.predict(params), np.argmax(label)) for (params, label) in data]
         return sum(int(x == y) for (x, y) in results)
-
 
 
 def sigmoid(x):
@@ -124,8 +138,8 @@ def squared_loss_drv(x, target):
 
 
 
-a = neural_net([3,2,1], 0, test, test, test, test)
+if __name__ == "__main__":
+    trn, tst = mnist_reader.get_data()
+    net = multilayer_perceptron([784, 30, 10], sigmoid, sigmoid_drv, squared_loss, squared_loss_drv)
 
-tst = np.array([[1], [2], [3]])
-
-print(a.feed_forward(tst))
+    net.gradient_descent(trn, 30, 10, 3)
