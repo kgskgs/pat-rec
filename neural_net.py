@@ -30,6 +30,11 @@ class multilayer_perceptron():
         return data
 
     def predict(self, data):
+        """
+        return a prediction as number
+        :param data: input
+        :return: :type int:
+        """
         return np.argmax(self.feed_forward(data))
 
     def gradient_descent(self, data, epochs, batch_size, eta):
@@ -61,6 +66,11 @@ class multilayer_perceptron():
             print("{}/{}".format(z+1, epochs))
 
     def backpropagation(self, params, label):
+        """
+        :param params: training data
+        :param label: training labels
+        :return: gradient for all weights and biases in the network
+        """
         grad_b = [np.zeros(b.shape) for b in self.biases]
         grad_w = [np.zeros(w.shape) for w in self.weights]
 
@@ -99,6 +109,11 @@ class multilayer_perceptron():
         return(grad_w, grad_b)
 
     def test(self, data):
+        """
+        check network against training data
+        :param data: input data and labels - list of tuples
+        :return: # of correct predictions
+        """
         #label is in vector form
         results = [(self.predict(params), np.argmax(label)) for (params, label) in data]
         return sum(int(x == y) for (x, y) in results)
